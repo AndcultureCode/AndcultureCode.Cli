@@ -3,5 +3,7 @@ export { CloneIssueSourceDtoFactory } from "./clone-issue-source-dto-factory";
 export { CreateIssueDtoFactory } from "./create-issue-dto-factory";
 export { CommandDefinitionFactory } from "./command-definition-factory";
 export { IssueFactory } from "./issue-factory";
+export { ProcessDescriptorFactory } from "./process-descriptor-factory";
 export { RepositoryFactory } from "./repository-factory";
+export { SpawnOptionsFactory } from "./spawn-options-factory";
 export { WebpackRestoreOptionsFactory } from "./webpack-restore-options-factory";

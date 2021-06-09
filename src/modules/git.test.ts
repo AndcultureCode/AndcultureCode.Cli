@@ -1,7 +1,5 @@
 import faker from "faker";
 import { Git } from "./git";
-import nock from "nock";
-import shell from "shelljs";
 import { TestUtils } from "../tests/test-utils";
 
 // -----------------------------------------------------------------------------------------
@@ -44,9 +42,7 @@ describe("git", () => {
 
         test("when repository clone fails, returns false", () => {
             // Arrange
-            jest.spyOn(shell, "exec").mockImplementation(
-                TestUtils.mockShellFunction(1)
-            );
+            TestUtils.spyOnSpawnSync({ status: TestUtils.randomNumber(1) });
 
             // Act & Assert
             expect(
@@ -56,9 +52,7 @@ describe("git", () => {
 
         test("when repository clone succeeds, returns true", () => {
             // Arrange
-            jest.spyOn(shell, "exec").mockImplementation(
-                TestUtils.mockShellFunction(0)
-            );
+            TestUtils.spyOnSpawnSync({ status: 0 });
 
             // Act & Assert
             expect(

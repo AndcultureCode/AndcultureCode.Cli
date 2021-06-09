@@ -1,5 +1,7 @@
 import shell from "shelljs";
+import { ProcessResult } from "../interfaces/process-result";
 import { Echo } from "./echo";
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Variables
@@ -11,7 +13,7 @@ const pythonInstallerUrl =
 // #endregion Variables
 
 // -----------------------------------------------------------------------------------------
-// #region Functions
+// #region Public Functions
 // -----------------------------------------------------------------------------------------
 
 const Azure = {
@@ -24,10 +26,9 @@ const Azure = {
                 shell.exit(1);
             }
 
-            if (shell.exec("pip install azure-cli").code !== 0) {
-                Echo.error("Failed to install azure cli via pip");
-                shell.exit(1);
-            }
+            Process.spawn("pip install azure-cli", {
+                onError: () => "Failed to install azure cli via pip",
+            });
 
             Echo.success(" - Successfully installed Azure CLI");
         }
@@ -39,12 +40,7 @@ const Azure = {
      */
     login(username: string, secret: string) {
         const loginCommand = `az login -u ${username} -p ${secret}`;
-
-        const { code } = shell.exec(loginCommand);
-        if (code !== 0) {
-            Echo.error(" - Failed to login to Azure");
-            shell.exit(code);
-        }
+        _login(loginCommand);
     },
     /**
      * Executes `az login` using service principal.
@@ -55,12 +51,7 @@ const Azure = {
     // @ts-expect-error ts-migrate(1117) FIXME: An object literal cannot have multiple properties ... Remove this comment to see the full error message
     login(clientId: string, tenantId: string, secret: string) {
         const loginCommand = `az login --service-principal -u ${clientId} -t ${tenantId} -p=${secret}`;
-
-        const { code } = shell.exec(loginCommand);
-        if (code !== 0) {
-            Echo.error(" - Failed to login to Azure");
-            shell.exit(code);
-        }
+        _login(loginCommand);
     },
     /**
      * Executes `az logout` to logout of az cli.
@@ -68,17 +59,25 @@ const Azure = {
     logout() {
         const logoutCmd = "az logout";
 
-        const { code } = shell.exec(logoutCmd);
-        if (code !== 0) {
-            Echo.error(
-                " - Failed to logout from Azure, it is recommended `az logout` is run manually"
-            );
-            shell.exit(code);
-        }
+        Process.spawn(logoutCmd, {
+            onError: () =>
+                " - Failed to logout from Azure, it is recommended `az logout` is run manually",
+        });
     },
 };
 
-// #endregion Functions
+// #endregion Public Functions
+
+// -----------------------------------------------------------------------------------------
+// #region Private Functions
+// -----------------------------------------------------------------------------------------
+
+const _login = (command: string): ProcessResult =>
+    Process.spawn(command, {
+        onError: () => " - Failed to login to Azure",
+    });
+
+// #endregion Private Functions
 
 // -----------------------------------------------------------------------------------------
 // #region Exports

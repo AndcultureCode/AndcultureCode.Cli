@@ -1,5 +1,5 @@
 import { StringUtils } from "andculturecode-javascript-core";
-import child_process from "child_process";
+import child_process, { SpawnSyncReturns } from "child_process";
 import upath from "upath";
 import faker from "faker";
 import concat from "concat-stream";
@@ -135,6 +135,20 @@ const TestUtils = {
     },
 
     /**
+     * Find the first `Program.cs` under the current directory.
+     */
+    findProgramCs(): string | never {
+        const programCs = shell.find("**/*/Program.cs")[0];
+        if (programCs != null) {
+            return programCs;
+        }
+
+        return _throwFatalError(
+            `Could not locate Program.cs in ${shell.pwd()}`
+        );
+    },
+
+    /**
      * Helper to easily check if tests run in continuous integration environment
      */
     isCI() {
@@ -177,19 +191,20 @@ const TestUtils = {
 
     /**
      *  Returns a Jest spy instance of the mocked `child_process.spawnSync` method
-     *
-     * @param {number} status Optional exit status for the mocked method to return. Defaults to 0.
      */
-    spyOnSpawnSync(status = 0) {
-        return jest.spyOn(child_process, "spawnSync").mockImplementation(() => {
-            return {
-                output: [],
-                pid: 0,
-                signal: "SIGTERM",
-                status,
-                stderr: Buffer.from(""),
-                stdout: Buffer.from(""),
-            };
+    spyOnSpawnSync(returnValue?: Partial<SpawnSyncReturns<Buffer>>) {
+        const {
+            status = 0,
+            stderr = Buffer.from(""),
+            stdout = Buffer.from(""),
+        } = returnValue ?? {};
+        return jest.spyOn(child_process, "spawnSync").mockReturnValue({
+            output: [],
+            pid: 0,
+            signal: "SIGTERM",
+            status,
+            stderr,
+            stdout,
         });
     },
 };

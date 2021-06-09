@@ -8,6 +8,7 @@ import { File } from "./modules/file";
 import { Zip } from "./modules/zip";
 import program from "commander";
 import shell from "shelljs";
+import { Process } from "./modules/process";
 
 CommandRunner.run(async () => {
     // -----------------------------------------------------------------------------------------
@@ -97,13 +98,10 @@ CommandRunner.run(async () => {
             Echo.message(
                 "Deploying to AWS beanstalk. Check AWS console for realtime output. This could take a few minutes..."
             );
-            if (
-                shell.exec(this.cmds.deploy + ` ${timeout} ${verbose}`).code !==
-                0
-            ) {
-                Echo.error(" - Failed to deploy to AWS beanstalk");
-                shell.exit(1);
-            }
+
+            Process.spawn(`${this.cmds.deploy} ${timeout} ${verbose}`, {
+                onError: () => " - Failed to deploy to AWS beanstalk",
+            });
 
             // Cleanup
             Dir.deleteIfExists(innerReleaseDir);
@@ -129,10 +127,9 @@ CommandRunner.run(async () => {
                 Echo.message("AWS EB CLI not found. Installing via PIP...");
 
                 // Unfortunately we must lock down our awscli and awsebcli versions so they use compatible dependencies https://github.com/aws/aws-cli/issues/3550
-                if (shell.exec("pip install awsebcli==3.14.4").code !== 0) {
-                    Echo.error("Failed to install eb cli via pip");
-                    shell.exit(1);
-                }
+                Process.spawn("pip install awsebcli==3.14.4", {
+                    onError: () => "Failed to install eb cli via pip",
+                });
 
                 Echo.success(" - Successfully installed AWS EB CLI");
             }

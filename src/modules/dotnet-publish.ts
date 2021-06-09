@@ -1,12 +1,11 @@
 import { StringUtils } from "andculturecode-javascript-core";
-import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { Dir } from "./dir";
 import { DotnetPath } from "./dotnet-path";
 import { Echo } from "./echo";
 import shell from "shelljs";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { Options } from "../constants/options";
-import child_process from "child_process";
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Constants
@@ -24,17 +23,13 @@ const PUBLISH_SUCCESS = " - Dotnet solution published";
 const DotnetPublish = {
     ERROR_PUBLISH_FAILED,
     PUBLISH_SUCCESS,
-    cmd(outputDirectory?: string): CommandStringBuilder {
+    cmd(outputDirectory?: string): string {
+        const command = "dotnet publish";
         if (StringUtils.isEmpty(outputDirectory)) {
-            return new CommandStringBuilder("dotnet", "publish");
+            return command;
         }
 
-        return new CommandStringBuilder(
-            "dotnet",
-            "publish",
-            "-o",
-            `"${outputDirectory}"`
-        );
+        return `${command} -o "${outputDirectory}"`;
     },
     description() {
         return `Publishes the dotnet solution from the root of the project (via ${this.cmd()})`;
@@ -44,7 +39,7 @@ const DotnetPublish = {
     },
     /**
      * Runs a publish of the dotnet solution to the local file system
-     * @param {string} absoluteOutputDir Optional absolute path of release output directory. If not provided,
+     * @param absoluteOutputDir Optional absolute path of release output directory. If not provided,
      * defaults to dotnet solution's 'release' directory
      */
     run(absoluteOutputDir?: string) {
@@ -88,20 +83,13 @@ const _cleanReleaseDir = (absoluteOutputDir: string) => {
 
 const _publishSolution = (absoluteOutputDir: string) => {
     const commandBuilder = DotnetPublish.cmd(absoluteOutputDir);
-    const { cmd, args } = commandBuilder;
 
     const publishMessage = `Publishing dotnet solution (via ${commandBuilder.toString()})...`;
     Echo.message(publishMessage);
 
-    const { status } = child_process.spawnSync(cmd, args, {
-        stdio: "inherit",
-        shell: true,
+    Process.spawn(commandBuilder.toString(), {
+        onError: () => ERROR_PUBLISH_FAILED,
     });
-
-    if (status != null && status !== 0) {
-        Echo.error(ERROR_PUBLISH_FAILED);
-        shell.exit(status);
-    }
 
     Echo.success(PUBLISH_SUCCESS);
 };

@@ -6,6 +6,7 @@ import { CommandRunner } from "./modules/command-runner";
 import { DeployConfig } from "./modules/deploy-config";
 import { Echo } from "./modules/echo";
 import { FrontendPath } from "./modules/frontend-path";
+import { Process } from "./modules/process";
 import { WebpackPublish } from "./modules/webpack-publish";
 
 CommandRunner.run(async () => {
@@ -65,10 +66,10 @@ CommandRunner.run(async () => {
             const syncCommand =
                 this.cmd(sourcePath, destination) + ` --profile ${profile}`;
             Echo.message(` - Command: ${syncCommand}`);
-            if (shell.exec(syncCommand, { silent: false }).code !== 0) {
-                Echo.error(" - Failed to deploy to AWS S3");
-                shell.exit(1);
-            }
+
+            Process.spawn(syncCommand, {
+                onError: () => " - Failed to deploy to AWS S3",
+            });
 
             Echo.newLine();
             Echo.success("Application successfully deployed to AWS S3!");
@@ -111,10 +112,9 @@ CommandRunner.run(async () => {
                 Echo.message("AWS CLI not found. Installing via PIP...");
 
                 // Unfortunately we must lock down our awscli and awsebcli versions so they use compatible dependencies https://github.com/aws/aws-cli/issues/3550
-                if (shell.exec("pip install awscli==1.16.9").code !== 0) {
-                    Echo.error("Failed to install aws cli via pip");
-                    shell.exit(1);
-                }
+                Process.spawn("pip install awscli==1.16.9", {
+                    onError: () => "Failed to install aws cli via pip",
+                });
 
                 Echo.success(" - Successfully installed AWS CLI");
             }

@@ -199,15 +199,15 @@ describe("AzcopySync", () => {
 
         test(`when fails then it calls shell.exit`, async () => {
             // Arrange
-            const exitCode = faker.random.number({ min: 1 });
-            const spawnSyncSpy = TestUtils.spyOnSpawnSync(exitCode);
+            const status = faker.random.number({ min: 1 });
+            const spawnSyncSpy = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             await AzcopySync.localFile(localFileOptions);
 
             // Assert
             expect(spawnSyncSpy).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
     });
 
@@ -476,15 +476,15 @@ describe("AzcopySync", () => {
 
         test(`when fails then it calls shell.exit`, async () => {
             // Arrange
-            const exitCode = faker.random.number({ min: 1 });
-            const spawnSyncSpy = TestUtils.spyOnSpawnSync(exitCode);
+            const status = faker.random.number({ min: 1 });
+            const spawnSyncSpy = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             await AzcopySync.containers(containersOptions);
 
             // Assert
             expect(spawnSyncSpy).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
     });
 

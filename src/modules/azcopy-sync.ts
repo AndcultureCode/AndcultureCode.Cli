@@ -1,7 +1,5 @@
 import { Echo } from "./echo";
-import shell from "shelljs";
-import { CommandStringBuilder } from "../utilities/command-string-builder";
-import child_process from "child_process";
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Constants
@@ -103,19 +101,11 @@ const AzcopySync = {
 // #region Private Functions
 // -----------------------------------------------------------------------------------------
 
-const _getCommandStringBuilder = (
+const _getCommandString = (
     source: string,
     destination: string,
     flags: string[]
-): CommandStringBuilder => {
-    return new CommandStringBuilder(
-        "azcopy",
-        "sync",
-        source,
-        destination,
-        ...flags
-    );
-};
+): string => `${AZCOPY_COMMAND} ${source} ${destination} ${flags.join(" ")}`;
 
 const _getBlobStorageUrl = (urlParts: BlobStorageUrlParts) => {
     const path = urlParts.path ?? "";
@@ -137,17 +127,14 @@ const _sync = (
     action: string,
     flags: string[]
 ) => {
-    const { cmd, args } = _getCommandStringBuilder(source, destination, flags);
+    const command = _getCommandString(source, destination, flags);
 
     Echo.message(`Starting the action of ${action}`);
-    const { status } = child_process.spawnSync(cmd, args, {
-        stdio: "inherit",
-        shell: true,
+
+    Process.spawn(command, {
+        onError: () => `Failed when performing the action of ${action}`,
     });
-    if (status != null && status !== 0) {
-        Echo.error(`Failed when performing the action of ${action}`);
-        shell.exit(status);
-    }
+
     Echo.success(`Succeeded when performing the action of ${action}`);
 };
 

@@ -1,24 +1,17 @@
-import child_process from "child_process";
 import { Echo } from "./echo";
-import shell from "shelljs";
-import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { DotnetPath } from "./dotnet-path";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { DotnetClean } from "./dotnet-clean";
 import { DotnetRestore } from "./dotnet-restore";
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Functions
 // -----------------------------------------------------------------------------------------
 
 const DotnetBuild = {
-    cmd(): CommandStringBuilder {
-        return new CommandStringBuilder(
-            "dotnet",
-            "build",
-            DotnetPath.solutionPath() ?? "",
-            "--no-restore"
-        );
+    cmd(): string {
+        return `dotnet build ${DotnetPath.solutionPath()} --no-restore`;
     },
     description(): string {
         return `Builds the dotnet project (via ${this.cmd()})`;
@@ -38,20 +31,15 @@ const DotnetBuild = {
             DotnetRestore.run();
         }
 
-        const { cmd, args } = this.cmd();
+        const command = this.cmd();
 
-        Echo.message(`Building solution (via ${this.cmd()})...`);
-        const { status } = child_process.spawnSync(cmd, args, {
-            stdio: "inherit",
-            shell: true,
+        Echo.message(`Building solution (via ${command})...`);
+
+        Process.spawn(command, {
+            onError: () => "Solution failed to build. See output for details.",
         });
 
-        if (status != null && status !== 0) {
-            Echo.error("Solution failed to build. See output for details.");
-            shell.exit(status);
-        }
-
-        return status;
+        return true;
     },
 };
 

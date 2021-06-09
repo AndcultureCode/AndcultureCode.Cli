@@ -73,9 +73,9 @@ describe("and-cli-dotnet", () => {
                     TestUtils.createDotnetSolution();
                     TestUtils.createDotnetConsoleApp();
                     TestUtils.addDotnetProject();
+                    const programFile = TestUtils.findProgramCs();
 
-                    const programFile = shell.ls("-R", "Program.cs")[0]; // <-- Locate entrypoint and force a compile error
-                    shell.echo(";").to(programFile);
+                    shell.echo(";").to(programFile); // <-- Force a compile error
 
                     const result = await TestUtils.executeCliCommand(COMMAND, [
                         option,
@@ -132,9 +132,9 @@ describe("and-cli-dotnet", () => {
                     TestUtils.createDotnetSolution();
                     TestUtils.createDotnetConsoleApp();
                     TestUtils.addDotnetProject();
+                    const programFile = TestUtils.findProgramCs();
 
-                    const programFile = shell.ls("-R", "Program.cs")[0]; // <-- Locate entrypoint and force a compile error
-                    shell.echo(";").to(programFile);
+                    shell.echo(";").to(programFile); // <-- Force a compile error
 
                     const result = await TestUtils.executeCliCommand(COMMAND, [
                         option,

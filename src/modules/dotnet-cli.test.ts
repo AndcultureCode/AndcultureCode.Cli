@@ -60,15 +60,15 @@ describe("DotnetCli", () => {
 
         test("when child_process.spawnSync returns non-zero status, it calls shell.exit with the status", () => {
             // Arrange
-            const exitCode = TestUtils.randomNumber(1);
-            const spawnSync = TestUtils.spyOnSpawnSync(exitCode);
+            const status = TestUtils.randomNumber(1);
+            const spawnSync = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             DotnetCli.run();
 
             // Assert
             expect(spawnSync).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
     });
 

@@ -2,6 +2,8 @@ import { Echo } from "./echo";
 import fs from "fs";
 import shell, { ExecOutputReturnValue } from "shelljs";
 import { StringUtils } from "andculturecode-javascript-core";
+import { Process } from "./process";
+import { ProcessResult } from "../interfaces/process-result";
 
 // -----------------------------------------------------------------------------------------
 // #region Public Members
@@ -22,7 +24,8 @@ const Git = {
         }
 
         const command = `git remote add ${name} ${url}`;
-        return shell.exec(command).code === 0;
+        const { code } = Process.spawn(command, { exitOnError: false });
+        return code === 0;
     },
 
     /**
@@ -41,15 +44,14 @@ const Git = {
         }
 
         const folder = this.getCloneDirectoryName(name, prefix);
-        const cloneResult = shell.exec(`git clone ${url} ${folder}`, {
-            silent: true,
-        }) as ExecOutputReturnValue;
-        if (cloneResult.code !== 0) {
-            Echo.error(`Failed to clone '${name}' - ${cloneResult.stderr}`);
-            return false;
-        }
 
-        return true;
+        const { code } = Process.spawn(`git clone ${url} ${folder}`, {
+            exitOnError: false,
+            onError: (result: ProcessResult) =>
+                `Failed to clone '${name}' - ${result.stderr}`,
+        });
+
+        return code === 0;
     },
 
     /**
@@ -91,7 +93,7 @@ const Git = {
      * @param {string} url absolute url
      */
     openWebBrowser(url: string) {
-        shell.exec(`git web--browse ${url}`);
+        Process.spawn(`git web--browse ${url}`);
     },
 };
 

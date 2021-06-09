@@ -5,7 +5,10 @@ import shell from "shelljs";
 // -----------------------------------------------------------------------------------------
 // #region Public Functions
 // -----------------------------------------------------------------------------------------
-
+/**
+ * @deprecated Use `Process.spawn` instead. This function allows you to pass a command string
+ * (including args) directly instead of separating them. This class will be removed in a future release.
+ */
 class CommandStringBuilder {
     // -----------------------------------------------------------------------------------------
     // #region Public Members

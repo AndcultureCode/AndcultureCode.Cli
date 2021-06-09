@@ -5,6 +5,7 @@ import { CommandRunner } from "./modules/command-runner";
 import { Echo } from "./modules/echo";
 import program from "commander";
 import shell from "shelljs";
+import { Process } from "./modules/process";
 
 CommandRunner.run(async () => {
     // -----------------------------------------------------------------------------------------
@@ -30,9 +31,12 @@ CommandRunner.run(async () => {
     // At some point, these git commands should be put into a shared module, see https://github.com/AndcultureCode/AndcultureCode.Cli/issues/91
     const deployAzureWebApp = {
         createRemoteIfMissing() {
-            const checkRemoteExistsCode = shell.exec(
-                `git remote get-url ${remote}`
-            ).code;
+            const { code: checkRemoteExistsCode } = Process.spawn(
+                `git remote get-url ${remote}`,
+                {
+                    exitOnError: false,
+                }
+            );
 
             if (checkRemoteExistsCode === 0) {
                 return;
@@ -44,15 +48,19 @@ CommandRunner.run(async () => {
                 credentialsArgs += ` --slot ${program.slot}`;
             }
 
-            const url = shell.exec(
-                `az webapp deployment list-publishing-credentials ${credentialsArgs}`
+            const {
+                stdout: url,
+            } = Process.spawn(
+                `az webapp deployment list-publishing-credentials ${credentialsArgs}`,
+                { exitOnError: false }
             );
 
-            if (shell.exec(`git remote add ${remote} ${url}`).code !== 0) {
-                Echo.error("Error trying to add remote!");
-                Azure.logout();
-                shell.exit(1);
-            }
+            Process.spawn(`git remote add ${remote} ${url}`, {
+                onError: () => {
+                    Azure.logout();
+                    return "Error trying to add remote!";
+                },
+            });
         },
         description() {
             return `Pushes indicated branch from the current git repo to indicated Azure Web App git repo, which then deploys to configured Azure Web App environment`;
@@ -64,11 +72,12 @@ CommandRunner.run(async () => {
                 pushCmd += " -f";
             }
 
-            if (shell.exec(pushCmd).code !== 0) {
-                Echo.error(" - Failed pushing to Web App remote");
-                Azure.logout();
-                shell.exit(1);
-            }
+            Process.spawn(pushCmd, {
+                onError: () => {
+                    Azure.logout();
+                    return " - Failed pushing to Web App remote";
+                },
+            });
         },
         async run() {
             // Check system/command requirements

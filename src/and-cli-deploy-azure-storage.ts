@@ -7,6 +7,7 @@ import { CommandRunner } from "./modules/command-runner";
 import { DeployConfig } from "./modules/deploy-config";
 import { Echo } from "./modules/echo";
 import { FrontendPath } from "./modules/frontend-path";
+import { Process } from "./modules/process";
 import { WebpackPublish } from "./modules/webpack-publish";
 
 CommandRunner.run(async () => {
@@ -79,11 +80,12 @@ CommandRunner.run(async () => {
 
             const copyCommand = this.cmd();
             Echo.message(` - Command: ${copyCommand}`);
-            if (shell.exec(copyCommand, { silent: false }).code !== 0) {
-                Echo.error(" - Failed to deploy to Azure Storage");
-                Azure.logout();
-                shell.exit(1);
-            }
+            Process.spawn(copyCommand, {
+                onError: () => {
+                    Azure.logout();
+                    return " - Failed to deploy to Azure Storage";
+                },
+            });
 
             // Logout from Azure
             Azure.logout();
@@ -142,10 +144,9 @@ CommandRunner.run(async () => {
                     shell.exit(1);
                 }
 
-                if (shell.exec("pip install azure-cli").code !== 0) {
-                    Echo.error("Failed to install azure cli via pip");
-                    shell.exit(1);
-                }
+                Process.spawn("pip install azure-cli", {
+                    onError: () => "Failed to install azure cli via pip",
+                });
 
                 Echo.success(" - Successfully installed Azure CLI");
             }

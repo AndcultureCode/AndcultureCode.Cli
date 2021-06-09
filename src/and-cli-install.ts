@@ -12,6 +12,8 @@ import program from "commander";
 import shell from "shelljs";
 import upath from "upath";
 import { CommandRunner } from "./modules/command-runner";
+import { Process } from "./modules/process";
+import { ProcessResult } from "./interfaces/process-result";
 
 CommandRunner.run(async () => {
     // -----------------------------------------------------------------------------------------
@@ -63,26 +65,8 @@ CommandRunner.run(async () => {
     // #region Private Functions
     // -----------------------------------------------------------------------------------------
 
-    const _bashFileContains = (text: string): boolean => {
-        return StringUtils.hasValue(
-            shell.cat(File.bashFile()).grep(text).stdout
-        );
-    };
-
-    const _echoInstallErrorAndExit = (code: number): never => {
-        Echo.error(`There was an error installing the package: ${code}`);
-        shell.exit(code);
-    };
-
-    const _execAndExitIfErrored = (cmd: string): boolean | never => {
-        const { code } = shell.exec(cmd);
-        if (code !== 0) {
-            _echoInstallErrorAndExit(code);
-            return false;
-        }
-
-        return true;
-    };
+    const _bashFileContains = (text: string): boolean =>
+        StringUtils.hasValue(shell.cat(File.bashFile()).grep(text).stdout);
 
     const _installAndCliGlobally = (): void => {
         const cmd = install.cmd(CLI_NAME);
@@ -90,7 +74,7 @@ CommandRunner.run(async () => {
             `Installing ${CLI_NAME} as global npm tool... (via ${cmd})`
         );
 
-        if (!_execAndExitIfErrored(cmd)) {
+        if (!_spawnAndHandleErrors(cmd)) {
             return;
         }
 
@@ -131,7 +115,7 @@ CommandRunner.run(async () => {
             `Installing current project as a global npm tool... (via ${cmd})`
         );
 
-        if (!_execAndExitIfErrored(cmd)) {
+        if (!_spawnAndHandleErrors(cmd)) {
             return;
         }
 
@@ -162,6 +146,15 @@ CommandRunner.run(async () => {
 
         Echo.success(`Successfully installed ${CLI_NAME} bash alias`);
         Echo.newLine();
+    };
+
+    const _spawnAndHandleErrors = (cmd: string): boolean | never => {
+        Process.spawn(cmd, {
+            onError: (result: ProcessResult) =>
+                `There was an error installing the package: ${result.code}`,
+        });
+
+        return true;
     };
 
     const _writeToBashFile = (text: string) =>

@@ -1,25 +1,16 @@
-import child_process from "child_process";
 import shell from "shelljs";
-import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { Echo } from "./echo";
 import { Options } from "../constants/options";
-
-// -----------------------------------------------------------------------------------------
-// #region Constants
-// -----------------------------------------------------------------------------------------
-
-const COMMAND = new CommandStringBuilder("npm", "install");
-
-// #endregion Constants
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Functions
 // -----------------------------------------------------------------------------------------
 
 const NodeRestore = {
-    cmd(): CommandStringBuilder {
-        return COMMAND;
+    cmd(): string {
+        return "npm install";
     },
     description() {
         return `Restore npm dependencies (via ${this.cmd()}) in the current directory`;
@@ -28,20 +19,12 @@ const NodeRestore = {
         return Options.Restore;
     },
     run() {
+        const command = this.cmd();
         Echo.message(
-            `Restoring npm packages (via ${this.cmd()}) in ${shell.pwd()}...`
+            `Restoring npm packages (via ${command}) in ${shell.pwd()}...`
         );
 
-        const { cmd, args } = this.cmd();
-        const { status } = child_process.spawnSync(cmd, args, {
-            stdio: "inherit",
-            shell: true,
-        });
-
-        if (status != null && status !== 0) {
-            Echo.error(`Exited with error: ${status}`);
-            shell.exit(status);
-        }
+        Process.spawn(command);
 
         Echo.success("npm packages restored");
     },

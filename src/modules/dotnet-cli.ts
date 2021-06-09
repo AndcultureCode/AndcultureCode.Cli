@@ -1,22 +1,20 @@
-import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { DotnetBuild } from "./dotnet-build";
 import { DotnetPath } from "./dotnet-path";
 import { Echo } from "./echo";
 import { Formatters } from "./formatters";
 import upath from "upath";
-import child_process from "child_process";
 import { Dir } from "./dir";
-import shell from "shelljs";
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Functions
 // -----------------------------------------------------------------------------------------
 
 const DotnetCli = {
-    cmd(cliArgs: string[] = []): CommandStringBuilder {
+    cmd(cliArgs: string[] = []): string {
         const pathName = upath.basename(DotnetPath.cliPath() ?? "");
-        return new CommandStringBuilder("dotnet", pathName, ...cliArgs);
+        return ["dotnet", pathName, ...cliArgs].join(" ");
     },
     description() {
         return (
@@ -41,18 +39,13 @@ const DotnetCli = {
 
         Dir.pushd(cliDir!);
 
-        const { cmd, args } = this.cmd(cliArgs);
+        const command = this.cmd(cliArgs);
 
         Echo.success(`Full command:` + this.cmd(cliArgs).toString());
-        const { status } = child_process.spawnSync(cmd, args, {
-            stdio: "inherit",
-            shell: true,
-        });
 
-        if (status != null && status !== 0) {
-            Echo.error("Command failed, see output for details.");
-            shell.exit(status);
-        }
+        Process.spawn(command, {
+            onError: () => "Command failed, see output for details.",
+        });
 
         Dir.popd();
     },

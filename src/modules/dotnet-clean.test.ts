@@ -134,15 +134,15 @@ describe("DotnetClean", () => {
                 () => ([] as any) as ShellArray
             );
             jest.spyOn(shell, "rm").mockImplementation();
-            const exitCode = faker.random.number({ min: 1 });
-            const spawnSyncSpy = TestUtils.spyOnSpawnSync(exitCode);
+            const status = TestUtils.randomNumber(1);
+            const spawnSyncSpy = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             DotnetClean.run();
 
             // Assert
             expect(spawnSyncSpy).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
     });
 

@@ -1,33 +1,20 @@
 import { CollectionUtils } from "andculturecode-javascript-core";
-import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { Constants } from "./constants";
 import { Dir } from "./dir";
 import { DotnetPath } from "./dotnet-path";
 import { Echo } from "./echo";
-import child_process from "child_process";
 import shell from "shelljs";
 import { Options } from "../constants/options";
-
-// -----------------------------------------------------------------------------------------
-// #region Constants
-// -----------------------------------------------------------------------------------------
-
-const COMMAND = new CommandStringBuilder(
-    "dotnet",
-    "clean",
-    DotnetPath.solutionDir() ?? ""
-);
-
-// #endregion Constants
+import { Process } from "./process";
 
 // -----------------------------------------------------------------------------------------
 // #region Public Functions
 // -----------------------------------------------------------------------------------------
 
 const DotnetClean = {
-    cmd(): CommandStringBuilder {
-        return COMMAND;
+    cmd(): string {
+        return `dotnet clean ${DotnetPath.solutionDir()}`;
     },
     description() {
         return `Clean the dotnet solution from the root of the project (via ${this.cmd()})`;
@@ -47,22 +34,16 @@ const DotnetClean = {
 
         Dir.popd();
 
-        const { cmd, args } = this.cmd();
+        const command = this.cmd();
 
         // Now we let the dotnet cli clean
         Echo.message(
-            `Running dotnet clean (via ${this.cmd()}) on the solution...`
+            `Running dotnet clean (via ${command}) on the solution...`
         );
 
-        const { status } = child_process.spawnSync(cmd, args, {
-            stdio: "inherit",
-            shell: true,
+        Process.spawn(command, {
+            onError: () => "Solution failed to clean. See output for details.",
         });
-
-        if (status != null && status !== 0) {
-            Echo.error("Solution failed to clean. See output for details.");
-            shell.exit(status);
-        }
 
         Echo.success("Dotnet solution cleaned");
     },

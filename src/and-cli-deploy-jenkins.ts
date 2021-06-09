@@ -11,6 +11,7 @@ import { CommandRunner } from "./modules/command-runner";
 import program from "commander";
 import { Prompt } from "./modules/prompt";
 import shell from "shelljs";
+import { Process } from "./modules/process";
 
 CommandRunner.run(async () => {
     // -----------------------------------------------------------------------------------------
@@ -77,10 +78,9 @@ CommandRunner.run(async () => {
                 url
             );
 
-            if (shell.exec(cmd.toString()).code !== 0) {
-                Echo.error(" - Failed to deploy Jenkins");
-                shell.exit(1);
-            }
+            Process.spawn(cmd.toString(), {
+                onError: () => " - Failed to deploy Jenkins",
+            });
         },
         async createProfile() {
             const jobName = await Prompt.questionAsync(

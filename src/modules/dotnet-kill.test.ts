@@ -1,8 +1,10 @@
 import { DotnetKill } from "./dotnet-kill";
 import faker from "faker";
-import { Ps } from "./ps";
+import { Process } from "./process";
 import { TestUtils } from "../tests/test-utils";
 import { ProcessDescriptor } from "ps-list";
+import { Factory } from "rosie";
+import { FactoryType } from "../tests/factories/factory-type";
 
 // -----------------------------------------------------------------------------------------
 // #region Tests
@@ -21,20 +23,20 @@ describe("DotnetKill", () => {
 
         test(`when '${DotnetKill.cmd()}' fails, it calls shell.exit`, async () => {
             // Arrange
-            const exitCode = faker.random.number({ min: 1 });
-            const spawnSyncSpy = TestUtils.spyOnSpawnSync(exitCode);
+            const status = faker.random.number({ min: 1 });
+            const spawnSyncSpy = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             await DotnetKill.run();
 
             // Assert
             expect(spawnSyncSpy).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
 
         test("when no dotnet process ids are found, it returns true", async () => {
             // Arrange
-            const psListSpy = jest.spyOn(Ps, "list").mockResolvedValue([]);
+            const psListSpy = jest.spyOn(Process, "list").mockResolvedValue([]);
 
             // Act
             const result = await DotnetKill.run();
@@ -46,25 +48,18 @@ describe("DotnetKill", () => {
 
         test("when dotnet process ids are found, it calls ps.kill", async () => {
             // Arrange
-            const mockPid = faker.random.number({ min: 1, max: 100 });
-            const mockProcesses: ProcessDescriptor[] = [
-                {
-                    name: TestUtils.randomWord(),
-                    pid: mockPid,
-                    ppid: 0,
-                },
-                { name: TestUtils.randomWord(), pid: mockPid + 1, ppid: 0 },
-            ];
-            const psKillSpy = jest.spyOn(Ps, "kill").mockResolvedValue(0);
-            jest.spyOn(Ps, "list").mockResolvedValue(mockProcesses);
+            const processes = Factory.buildList<ProcessDescriptor>(
+                FactoryType.ProcessDescriptor,
+                2
+            );
+            const psKillSpy = jest.spyOn(Process, "kill").mockImplementation();
+            jest.spyOn(Process, "list").mockResolvedValue(processes);
 
             // Act
             await DotnetKill.run();
 
             // Assert
-            expect(psKillSpy).toHaveBeenCalledWith(
-                mockProcesses.map((e) => e.pid)
-            );
+            expect(psKillSpy).toHaveBeenCalledWith(processes.map((e) => e.pid));
         });
     });
 

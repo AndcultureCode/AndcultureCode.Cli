@@ -7,7 +7,9 @@ const FactoryType = {
     CommandDefinition: "CommandDefinition",
     CreateIssueDto: "CreateIssueDto",
     Issue: "Issue",
+    ProcessDescriptor: "ProcessDescriptor",
     Repository: "Repository",
+    SpawnOptions: "SpawnOptions",
     WebpackRestoreOptions: "WebpackRestoreOptions",
 };
 

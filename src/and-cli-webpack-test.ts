@@ -11,6 +11,7 @@ import { NodeClean } from "./modules/node-clean";
 import { NodeRestore } from "./modules/node-restore";
 import program from "commander";
 import shell from "shelljs";
+import { Process } from "./modules/process";
 
 CommandRunner.run(async () => {
     // -----------------------------------------------------------------------------------------
@@ -34,19 +35,12 @@ CommandRunner.run(async () => {
      * @see https://github.com/AndcultureCode/AndcultureCode.Cli/issues/96
      */
     const webpackTest = {
-        cmd(isCI = false) {
+        cmd(isCI: boolean = false): string {
             if (isCI) {
-                return new CommandStringBuilder(
-                    "npx",
-                    "cross-env",
-                    "CI=true",
-                    "npm",
-                    "run",
-                    "test"
-                );
+                return "npx cross-env CI=true npm run test";
             }
 
-            return new CommandStringBuilder("npm", "run", "test");
+            return "npm run test";
         },
         description() {
             return `Runs the webpack project tests in ${FrontendPath.projectDir()} (via ${this.cmd()})`;
@@ -69,29 +63,7 @@ CommandRunner.run(async () => {
                 `Running frontend tests (via ${this.cmd(program.ci)})...`
             );
 
-            // Continuous Integration mode (ci)
-            if (program.ci) {
-                const result = shell.exec(this.cmd(true).toString());
-
-                if (result.code !== 0) {
-                    Echo.headerError("One or many tests failed");
-                    shell.exit(result.code);
-                }
-                return;
-            }
-
-            // Interactive mode (non-ci)
-            const { cmd, args } = this.cmd();
-
-            const result = child_process.spawnSync(cmd, args, {
-                stdio: "inherit",
-                shell: true,
-            });
-
-            if (result.status != null && result.status !== 0) {
-                Echo.error(`Exited with error: ${result.status}`);
-                shell.exit(result.status);
-            }
+            Process.spawn(this.cmd(program.ci));
 
             Dir.popd();
             Echo.newLine();

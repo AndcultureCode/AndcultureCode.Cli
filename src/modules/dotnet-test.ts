@@ -3,10 +3,12 @@ import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
 import { DotnetPath } from "./dotnet-path";
 import { Echo } from "./echo";
-import child_process from "child_process";
 import { DotnetBuild } from "./dotnet-build";
 import { Dir } from "./dir";
-import shell, { ExecOutputReturnValue } from "shelljs";
+import shell from "shelljs";
+import { SpawnIOMode } from "../enums/spawn-io-mode";
+import { Process } from "./process";
+import { ProcessResult } from "../interfaces/process-result";
 
 // -----------------------------------------------------------------------------------------
 // #region Interfaces
@@ -23,10 +25,7 @@ import shell, { ExecOutputReturnValue } from "shelljs";
  *      stdout: "...",
  *  }
  */
-interface ProjectTestResult
-    extends Pick<ExecOutputReturnValue, "stderr">,
-        Pick<ExecOutputReturnValue, "stdout"> {
-    code: number;
+interface ProjectTestResult extends ProcessResult {
     name: string;
 }
 // #endregion Interfaces
@@ -190,34 +189,31 @@ const DotnetTest = {
     runProject(project: string): ProjectTestResult {
         // Build out the full command string as well as informational message based on configuration
         const commandString = _buildCommandString(project);
-        const { cmd, args } = commandString;
         const message = _buildMessage(commandString, project);
 
         Echo.message(message);
 
         // Determine the stdio mode based on whether or not this is being run in ci mode.
         // If in ci mode, we need to pipe output to capture stdout/stderr for the output summary.
-        const stdioMode = _ciMode ? "pipe" : "inherit";
-        const result = child_process.spawnSync(cmd, args, {
-            stdio: stdioMode,
-            shell: true,
+        const stdio = _ciMode ? SpawnIOMode.Pipe : SpawnIOMode.Inherit;
+        const result = Process.spawn(commandString.toString(), {
+            exitOnError: false,
+            stdio,
         });
 
         // We only need to manually output stdout/stderr in ci mode since we're piping it.
         // For regular use, stdout/stderr will be inherited and output automatically.
         if (_ciMode) {
-            Echo.message(result.stdout.toString());
+            Echo.message(result.stdout);
 
-            if (result.stderr != null && result.stderr.length > 0) {
-                Echo.error(result.stderr.toString());
+            if (StringUtils.hasValue(result.stderr)) {
+                Echo.error(result.stderr);
             }
         }
 
         return {
-            code: result.status ?? 0,
+            ...result,
             name: project,
-            stderr: result.stderr?.toString(),
-            stdout: result.stdout?.toString(),
         };
     },
     runSolutionByProject() {
@@ -294,19 +290,11 @@ const DotnetTest = {
 
         // Build out the full command string as well as informational message based on configuration
         const commandString = _buildCommandString();
-        const { cmd, args } = commandString;
         const message = _buildMessage(commandString);
 
         Echo.message(message);
 
-        const result = child_process.spawnSync(cmd, args, {
-            stdio: "inherit",
-            shell: true,
-        });
-        if (result.status != null && result.status !== 0) {
-            Echo.error(`Exited with error: ${result.status}`);
-            shell.exit(result.status);
-        }
+        Process.spawn(commandString.toString());
 
         Dir.popd();
         Echo.newLine();

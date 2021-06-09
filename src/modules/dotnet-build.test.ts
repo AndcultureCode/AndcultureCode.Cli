@@ -57,15 +57,15 @@ describe("DotnetBuild", () => {
 
         test("when dotnet command returns non-zero exit code, it calls shell.exit with that code", () => {
             // Arrange
-            const exitCode = faker.random.number({ min: 1 });
-            const spawnSyncSpy = TestUtils.spyOnSpawnSync(exitCode);
+            const status = TestUtils.randomNumber(1);
+            const spawnSyncSpy = TestUtils.spyOnSpawnSync({ status });
 
             // Act
             DotnetBuild.run(faker.random.boolean(), faker.random.boolean());
 
             // Assert
             expect(spawnSyncSpy).toHaveBeenCalled();
-            expect(shellExitSpy).toHaveBeenCalledWith(exitCode);
+            expect(shellExitSpy).toHaveBeenCalledWith(status);
         });
     });
 

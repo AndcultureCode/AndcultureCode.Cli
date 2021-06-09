@@ -7,6 +7,8 @@ import { MigrationMode } from "../enums/migration-mode";
 import { CollectionUtils } from "andculturecode-javascript-core";
 import { CommandStringBuilder } from "../utilities/command-string-builder";
 import { OptionStringBuilder } from "../utilities/option-string-builder";
+import { Process } from "./process";
+import { ProcessResult } from "../interfaces/process-result";
 
 // -----------------------------------------------------------------------------------------
 // #region Constants
@@ -114,11 +116,7 @@ const Migration = {
 
         Dir.pushd(dataProjectDir);
 
-        const result = shell.exec(migrationCmd.toString());
-        if (result.code !== 0) {
-            Echo.error(`Error running migration command: ${result}`);
-            shell.exit(result.code);
-        }
+        Process.spawn(migrationCmd.toString());
 
         Dir.popd();
 
